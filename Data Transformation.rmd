@@ -1,0 +1,150 @@
+---
+title: 'Dsouza_Clinton_Assignment #2'
+author: "Clinton Dsouza"
+date: "9/14/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+Lets load the libraries required for this assignment
+```{r}
+library(tidyverse)
+library(gapminder)
+```
+
+
+Lets convert gapminder data to a data frame as below:
+```{r}
+gapminder <- as.data.frame(gapminder)
+```
+
+
+Lets load the surveys.csv data as shown below:
+```{r}
+setwd("C:\\Users\\dsouz\\Desktop")
+surveys <- read.csv("surveys.csv", header = T, sep = ",")
+head(surveys,40)
+```
+
+
+**********************************************************************************************************
+QUESTION 1: Extract surveys observation for the first 3 months of 1990
+
+```{r}
+first_3_1990 <- surveys %>%
+              filter(year == 1990 & (month ==1 | month == 2 | month ==3))
+head(first_3_1990, 40)
+```
+
+
+***********************************************************************************************************
+QUESTION 2: Sort 1990 winter surveys data by descending order of record_id and ascending of weight
+
+Here I have assumed that winter lasts for the month of November, December, January and February
+```{r}
+winter_data <- surveys %>%
+  filter(year == 1990 & month %in% c(11,12,1,2)) %>%
+  arrange(desc(record_id), weight)
+head(winter_data, 40)
+```
+
+
+***********************************************************************************************************
+QUESTION 3: Return record_id, sex, weight of all individuals of RO montanus
+```{r}
+surveys %>%
+  filter(species_id == "RO")%>%
+  select(record_id, sex, weight)
+```
+
+
+***********************************************************************************************************
+QUESTION 4: Return the avg weight and hindfoot length of DM individual for each month
+```{r}
+surveys %>%
+  filter(species_id == "DM") %>%
+  group_by(month) %>%
+  summarise(avg_weight = mean(weight, na.rm = TRUE), avg_hflength = mean(hindfoot_length, na.rm = TRUE))
+```
+
+
+***********************************************************************************************************
+QUESTION 5: Determine number of species observed in winter of 1990
+
+Here I have assumed that winter is from November to February
+```{r}
+surveys %>%
+  filter(year == 1990 & month %in% c(1,2,11,12)) %>%
+  group_by(species_id) %>%
+  summarise(count = n())
+```
+
+
+***********************************************************************************************************
+QUESTION 6: Mutate to contain a column for gross domesic product for each row
+
+```{r}
+gapminder_df <- gapminder %>%
+                  mutate(GDP = gdpPercap*pop)
+head(gapminder_df,40)
+```
+
+
+***********************************************************************************************************
+QUESTION 7: Calculate mean gdp for cambodia for the years within the dataset
+
+In this example I am assuming it is asking to find the mean GDP for each year over the years in the dataset
+```{r}
+gapminder_df %>%
+  filter(country == "Cambodia") %>%
+  group_by(year) %>%
+  summarise(mean(GDP))
+```
+
+If we want to find the mean gdp over all the years in the dataset
+```{r}
+gapminder_df %>%
+  filter(country == "Cambodia") %>%
+  summarise(mean(GDP))
+```
+
+
+**********************************************************************************************************
+QUESTION 8: Find the year with the max life expectancy for countries in Asia and arrange in descending of year
+
+```{r}
+gapminder %>%
+  filter(continent == "Asia") %>%
+  group_by(country) %>%
+  select(country, year, lifeExp) %>%
+  filter(lifeExp == max(lifeExp)) %>%
+  arrange(desc(year))
+```
+
+
+***********************************************************************************************************
+QUESTION 9: Count number of observations per continent
+
+```{r}
+gapminder %>%
+  group_by(continent) %>%
+  summarise(count = n())
+```
+
+
+***********************************************************************************************************
+QUESTION 10: Compute avg and median life expectancy and GDP per capita by continent for year 1952 and 2007
+```{r}
+gapminder %>%
+  filter(year == 1952 | year == 2007) %>%
+  group_by(continent, year) %>%
+  summarise(avglfexpt = mean(lifeExp), medlyfexpt = median(lifeExp), mean(gdpPercap))
+```
+The above results show that the averagelife expectancy, median of the life expectancy and the average of the GDP/capita have all increased for all continents in the recent year (2007) as compared to past data (1952). We should be optimistic about the result because there is progress in every domain in the latest data.
+
+
+
+
+
