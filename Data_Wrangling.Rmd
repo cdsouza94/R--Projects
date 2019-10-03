@@ -1,0 +1,214 @@
+---
+title: "Dsouza_Clinton_Assignment#4"
+author: "Clinton Dsouza"
+date: "10/1/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+Install all the libraries required for this assignment
+```{r}
+library(tidyverse)
+library(stringr)
+library(forcats)
+library(readxl)
+```
+
+
+Loading the farmers_market dataset
+```{r}
+farmermkt <- read_csv("farmers_market.csv.csv", 
+                      col_types = cols(Season4Date = col_character(), Season4Time
+                                       = col_character()))
+head(farmermkt,75)
+```
+
+
+WarmUp
+```{r}
+farmermktcs <- paste(farmermkt$city, farmermkt$State, sep = ", ")
+head(farmermktcs, 75)
+```
+
+
+Q1.
+Clean Facebook and Twitter Column
+a. Cleaning the Facebook column to contain only the facebook username
+```{r}
+FbClean <- gsub("(.*).com\\/", "", farmermkt$Facebook)
+FbClean <- gsub("^(pages\\/)", "", FbClean)
+FbClean <- gsub("(\\/)$", "", FbClean)
+FbClean <- gsub("(\\?)\\w.*", "", FbClean)
+FbClean <- gsub("(\\/)\\w.*", "", FbClean)
+FbClean <- gsub("(\\-)\\w.*", "", FbClean)
+head(FbClean,75)
+```
+
+b. Cleaning the Twitter column to contain only the Twitter username
+```{r}
+TwClean <- gsub("(?i)(.*).com\\/", "", farmermkt$Twitter)
+TwClean <- gsub("@", "", TwClean)
+head(TwClean,75)
+```
+
+
+Q2. 
+Cleaning the city column
+```{r}
+clcity <- str_to_lower(farmermkt$city, locale = "en")
+Clcity <- gsub(",.*", "", farmermkt$city)
+head(Clcity,75)
+```
+
+Cleaning the street column
+```{r}
+clstreet <- farmermkt$street
+clstreet <- str_replace_all(clstreet, c("Street" = "St", "Streets" ="St", "St."="St", "street"="St"))
+clstreet <- gsub("\\s[a|A]nd", "&", clstreet)
+clstreet <- gsub("\\s[A|a]venue", "Ave\\.", clstreet)
+clstreet <- gsub("\\s[B|b]roadway", "Bdwy\\.", clstreet)
+clstreet <- gsub("\\s[R|r]oad", "Rd\\.", clstreet)
+head(clstreet,75)
+```
+
+
+Q3.
+Creating a tibble that contains the % of farmers in their respective states who have a facebook or twitter account
+```{r}
+Farmer_Online_account  <- farmermkt %>%
+                      select(State, Facebook, Twitter) %>%
+                      group_by(State) %>%
+                      summarise(TotalMarket = n(), Fbcount =
+                      sum(!is.na(Facebook)),      percent_FB=(Fbcount/TotalMarket)*100,
+                      TWcount = sum(!is.na(Twitter)), percent_TW = (TWcount/TotalMarket)*100, TWFb =sum(TWcount, Fbcount), percent_TWFb = (TWFb/TotalMarket)*100)
+
+Farmer_Online_account
+
+summary_online_account <- tibble(state= Farmer_Online_account$State, percent_FB= Farmer_Online_account$percent_FB, percent_TW= Farmer_Online_account$percent_TW, percent_FBorTW= Farmer_Online_account$percent_TWFb)
+
+head(summary_online_account,75)
+```
+
+
+Q4.
+forcats::fct_recode()
+The farmer market names are quite long in this data set. Every observation in the "MarketName" has a unique observation. 
+By using fct_recode() function, we will not be able to change/rename every observation in the variable "Market Name". The purpose of fct_recode() is to set distinct categories in the variable such that the entire variable is grouped with fixed categorical observations. This will result in better visualization and further analysis. fct_recode() function will take a fixed string and match the exact string to replace it as given in the argument. 
+In this situation, since the column MarketName has lots of variation in the names, we will have to use regex to rename the column which is a better solution.
+
+Creating a tibble using dplyr which has the details of location type
+```{r}
+LocationType <- farmermkt %>%
+  select(Location) %>%
+  group_by(Location) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+head(LocationType,75)
+```
+
+Plotting the graph of number of farmer markets as per location type
+```{r}
+LTGraph <- ggplot(LocationType) + geom_bar(aes(fct_reorder(Location, count),count), stat = "identity")
+LTGraph
+LTGraph + coord_flip()
+```
+
+
+Q5.
+Perform Sanity check on the kyfprojects dataset
+
+a. Reading the data set
+```{r}
+kyf <- read_excel("kyfprojects.xls.xls")
+head(kyf,50)
+```
+
+b. Check if Program Abbreviation has the same match across all the Program Names i.e. Program abbreviation is the same overall for every distinct Program names
+```{r}
+kyfPN <- kyf$`Program Name`
+kyfPN <- gsub("[a-z \\s \\-]", "", kyfPN)
+kyfPN <- gsub("(\\s Grants)$", "", kyfPN)
+kyfPN <- gsub("^CFPCG$", "CFP", kyfPN)
+kyfPN <- gsub("^RMEOP$", "RMEO", kyfPN)
+kyfPN <- gsub("^B&ILG", "B and I", kyfPN)
+kyfPN <- gsub("^HFCG", "HFC", kyfPN)
+
+kyfPA <- kyf$`Program Abbreviation`
+
+str_detect(kyfPA, kyfPN)
+```
+
+Since everything returns a TRUE value that means the Program Name matches the Program Abbreviation across all rows and is distinct for a particular set
+
+
+c. Cleaning all categorical variables and creating a distinct set by replacing similar entries
+
+c.1. Clean the column of Funding Type
+```{r}
+kyf %>%
+  group_by(`Funding Type`) %>%
+  count(`Funding Type`)
+```
+
+This set returns a clean distinct set
+
+c.2. Clean the column of USDA Agency
+```{r}
+kyf$`USDA Agency` <- gsub("^[N].*[e]$","NIFA",kyf$`USDA Agency`) 
+kyf$`USDA Agency` <- gsub("^[F].*[e]$","FNS",kyf$`USDA Agency`)
+kyf$`USDA Agency` <- gsub("^[(Ag)|(ag)].*[e]$","AMS",kyf$`USDA Agency`)
+kyf$`USDA Agency` <- gsub("^[R].*[t]$","RBS",kyf$`USDA Agency`)
+kyf$`USDA Agency` <- gsub("^[R].[S]$","RBS",kyf$`USDA Agency`)
+kyf %>%
+  group_by(`USDA Agency`) %>%
+  count(`USDA Agency`)
+```
+
+This returns a new clean distinct variable for USDA Agency
+
+c.3. Clean the column of USDA Mission Area
+```{r}
+kyf$`USDA Mission Area` <- gsub("^(Fo).*[s]$","Food, Nutrition and Consumer Services", kyf$`USDA Mission Area`)
+kyf %>%
+  group_by(`USDA Mission Area`) %>%
+  count(`USDA Mission Area`)
+```
+
+This returns a new clean variable for USDA MIssion Area
+
+c.4. Recipient variable has a lot of different observations and they cannot be categorized into particular sets 
+
+c.5. Clean the column of Recipient Type
+```{r}
+kyf$`Recipient Type` <- gsub("[N].*", "Nonprofit", kyf$`Recipient Type`)
+kyf %>%
+  group_by(`Recipient Type`) %>%
+  count(`Recipient Type`)
+```
+
+This returns a clean set for Recipient Type
+
+c.6. Funding Type
+```{r}
+kyf %>%
+  group_by(`Funding Type`) %>%
+  count(`Funding Type`)
+```
+
+d. Compare USDA Mission Area and USDA Agency
+```{r}
+USDAAb <- gsub("^(M).*(s)$", "AMS", kyf$`USDA Mission Area`)
+USDAAb <- gsub("^(R).*(t)$", "RBS", USDAAb)
+USDAAb <- gsub("^(R).*(s)$", "NIFA", USDAAb)
+USDAAb <- gsub("^(Fa).*(s)$", "RMA", USDAAb)
+USDAAb <- gsub("^(Fo).*(s)$", "FNS", USDAAb)
+
+str_detect(kyf$`USDA Agency`, USDAAb)
+```
+
+Since this returns all TRUE values, we can be now certain that the variables are matching across all observations. If this task was performed before the cleaning of variables, then we would not get TRUE values across every string.
+
+e. Final view of the clean kyfprojects data
+```{r}
+head(kyf,100)
+```
