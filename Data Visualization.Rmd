@@ -1,0 +1,382 @@
+---
+Author: Clinton Dsouza
+Date: 09/10/2019
+Title: Dsouza_Clinton_Assignment1
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+
+Lets load the libraries required for this assignment
+```{r}
+library(tidyverse)
+library(maps)
+```
+
+
+*******************************************************************************
+Question 1.
+```{r}
+?mtcars
+```
+The gear variable in the data set for mtcars describes the number of forward gears.
+
+
+*******************************************************************************
+Question 2.
+```{r}
+ggplot(data = mtcars) + geom_point(mapping = aes(x=mpg, y=cyl))+labs(x="mpg",y="cyl")
+```
+
+
+*******************************************************************************
+Question 3.
+```{r}
+?mtcars
+str(mtcars)
+```
+cyl, vs, am, gear, carb  are categorical variables in mtcars.
+mpg, disp, hp, drat, wt, qsec are continuous variables.
+Variables which are mentioned as categorical above have a fixed set of numbers
+and can be distinguishable. Continuous variables are in the form of integers or decimals and do not have a fixed set of distinguishable numbers.?mtcars gives us the information and help related to mtcars. str(mtcars) will give details on what every variable of the data frame.
+
+
+*******************************************************************************
+Question 4.
+We can facet the plots by using the argument facet_grid(rows~columns). Refer below for detailed explanation on its usage.
+```{r}
+ggplot(data = mtcars) + geom_point(mapping = aes(x=disp, y=mpg)) + facet_grid(cyl ~ .)
+```
+The above plot with facet will subset the mtcars dataset with the cyl(number of cylinder) variable distinguised in a row format
+
+```{r}
+ggplot(data = mtcars) + geom_point(mapping = aes(x=disp, y=mpg)) + facet_grid(. ~ am)
+```
+The above plot with facet will subset the mtcars dataset with am (transmission) variable distinguised in a column format. If a . is provided then the plot will only be facetted in either the row or column depending on which variable is mentioned where in the syntax
+
+
+*******************************************************************************
+Question 5
+```{r}
+?facet_wrap
+```
+nrow will control and set the number of rows in the plot. ncol will control and set the number of columns in the plot. nrow and ncol is used to set the aesthetic and the spread of the plot for better visualization.
+
+We can change the levels of the underlying factor in order to change the order in which panels appear. Also, we can use the ‘scales’ argument to allow scales to vary across the panels. Also, strip.position can be used to display the facet label at the side of your choice. We can also use shrink, switch, drop, dir to control the layout of the plot.
+
+facet_grid() is used when we have to distinguish the plot using combination of 2 variables. facet_grid() will create a plot based on the two variables that are mentioned in the syntax. Therefore a nrow or ncol won’t work with facet_grid() since facet_grid() will pull the value from the variable in the syntax.
+
+
+*******************************************************************************
+Question 6
+Prediction for the below code is that it will plot a scatterplot for mtcars dataset with disp on X axis and mpg on Y axis with all points colored based on cyl variable. Diﬀerent number of cyl will have a diﬀerent color shades. It will also give a smooth line with the same shade of color which will best ﬁt all the points in the dataset but without the Conﬁdence Interval.
+
+```{r}
+ggplot(data = mtcars, mapping = aes(x=disp, y=mpg, color = cyl)) +
+  geom_point()+
+  geom_smooth(se=FALSE)
+```
+
+
+
+*******************************************************************************
+Question 7
+The default geom associated with stat_summary() is geom_pointrange()
+```{r}
+ggplot(data = mtcars)+
+  stat_summary(mapping = aes(x=disp, y=mpg),
+               fun.ymin = min,
+               fun.ymax = max,
+               fun.y = median)
+```
+
+The above code can be written using geom_pointrage() as below:
+```{r}
+ggplot(data = mtcars)+
+  geom_pointrange(mapping = aes(x=disp, y=mpg),
+                  fun.ymin = min,
+                  fun.ymax = max,
+                  fun.y = median,
+                  stat = "summary")
+```
+We use the argument of stat="summary" to use stat_summary()
+
+
+
+*******************************************************************************
+Question 8
+Plotting using geom_point()
+```{r}
+ggplot(data = mpg, mapping = aes(x=cty, y=hwy)) +
+  geom_point()
+```
+
+We will use geom_jitter() in the above code
+```{r}
+ggplot(data = mpg, mapping = aes(x=cty, y=hwy))+
+  geom_jitter()
+```
+
+We will use geom_count() in the above code
+```{r}
+ggplot(data = mpg, mapping = aes(x=cty, y=hwy))+
+  geom_count()
+```
+
+geom_jitter() will add a small amount of noise to each point. This adds randomness to the plot to make it revealing at large scales. This is done to reduce overplotting, where several points overlap each other.
+
+geom_count() willincrease the size of the points based on the frequency of the data pointsin the variable. If diﬀerent observations have the same value then the points will have larger size as compared to other points. This can create overplotting. Usually geom_count() is less readable than geom_jitter().
+
+
+*******************************************************************************
+Question 9
+```{r}
+ggplot(data = mpg, mapping = aes(x=cty, y=hwy))+
+  geom_point()+
+  geom_abline()+
+  coord_fixed()
+```
+
+The above plot shows a linear positive relation between cty and hwy variables.
+coord_fixed() forces a specified ratio between the physical representation of data units on the axes. The default ration is 1 and it ensures that one unit on X axis is equal to one unit on Y axis. If ratio is greater than 1, units on Y axis are longer.Also, coord_fixed() ensures that the line generated by geom_abline() is at 45 degrees.This is ensured because the coordinated are fixed and therefore the line drawn has to be at 45 degrees. This plays an important role to study the relationship between variables.
+
+geom_abline() adds reference lines depending on the slope and intercept. It can draw horizontal, vertical or inclined lines.In the above code if coord_fixed() is not included then the plot does not show a 45 degree line.
+
+
+*******************************************************************************
+Question 10
+```{r}
+mpg
+```
+This will load the entire mpg dataset.
+
+Creating a ggplot for displ VS hwy
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x=displ, y=hwy))
+```
+
+*****Aesthetic Mappings in GGPlot
+1: Color
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x=displ, y=hwy, color = class))
+```
+This code will plot the same scatterplot but will color the points with respect to class variable
+
+2: Alpha
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x=displ, y=hwy, alpha = class))
+```
+This code will plot the scatterplot and alpha aesthetic will control the transparency of the points.
+
+3: Shape
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x=displ, y=hwy, shape = class))
+```
+This code will plot the scatterplot and shape aesthetic will give different shapes to different class variable. But ggplot2 will only use 6 shapes at a time.
+
+4: Color all points
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x=displ, y=hwy), color = "blue")
+```
+
+*****Facets in GGPlot
+1. facet_wrap()
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x=displ, y=hwy))+
+  facet_wrap(~class, nrow = 2)
+```
+facet_wrap() is used to facet the plot by single variable. We can adjust. The number of rows and columns using nrow or ncol. The variable used to pass facet_wrap should be discrete
+
+2. facet_grid()
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x=displ, y=hwy))+
+  facet_grid(drv~class)
+```
+facet_grid() will facet the plot based on the combination of 2 variables. Before ~ is shown in rows and after ~ is shown in columns.
+
+*****Geometric Objects
+1. geom_point()
+```{r}
+ggplot(data = mpg) + geom_point(mapping = aes(x=displ, y=hwy))
+```
+This will plot scatterplot
+
+2. geom_smooth()
+```{r}
+ggplot(data = mpg) + geom_smooth(mapping = aes(x=displ, y=hwy))
+```
+This will plot the best fit line with its confidence interval
+
+```{r}
+ggplot(data = mpg) + geom_smooth(mapping = aes(x=displ, y=hwy, linetype = drv))
+```
+This will plot the best fit line by distinguising the drv variable by its linetype
+
+```{r}
+ggplot(data = mpg) + geom_smooth(mapping = aes(x=displ, y=hwy, group=drv))
+```
+This will create the best fit lines by grouping the drv variable
+
+```{r}
+ggplot(data = mpg) + geom_smooth(mapping = aes(x=displ, y=hwy, color=drv), show.legend = FALSE)
+```
+This will create the best fit line by distinguisng the drv variable in color format
+
+```{r}
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy))+
+  geom_point()+geom_smooth()
+```
+The above code will create a scatterplot along with the best fit line. This code is easier if we have to do any modifications since we have to change variables only in ggplot() statement
+
+```{r}
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy))+
+  geom_point(mapping = aes(color=class))+geom_smooth()
+```
+This plot will create a scatterplot and all points will be colored based on different class variable. Also a best fit line for the data is plotted
+
+```{r}
+ggplot(data = mpg, mapping = aes(x=displ, y=hwy))+
+  geom_point(mapping = aes(color=class))+
+  geom_smooth(data = filter(mpg, class == "subcompact"), se = FALSE)
+```
+This code will create a scatterplot with all points colored differently based on class variable. It will also create a best fit line but only for the subcompact class
+
+*****Statistical Transformations
+```{r}
+ggplot(data = diamonds) + geom_bar(mapping = aes(x=cut))
+```
+The above code will create a bar chart for the diamonds data set grouped by the cut variable on the X axis
+
+```{r}
+ggplot(data = diamonds) + stat_count(mapping = aes(x=cut))
+```
+This will create the same plot but by using the stat argument. stat_count corresponds to geom_bar
+
+1. To change the stat from default to something else
+Here stat_count is changed to identity. This will map the height of the bars to the raw values of Y variable
+
+```{r}
+demo <- tribble(
+  ~cut, ~freq,
+  "Fair", 1610,
+  "Good", 4906,
+  "Very Good", 12082,
+  "Premium", 13791,
+  "Ideal", 21551)
+ggplot(data = demo) +
+  geom_bar(mapping = aes(x=cut, y=freq), stat = "identity")
+```
+
+2. To display a bar chart of proportion
+```{r}
+ggplot(data = diamonds) +
+  geom_bar(mapping = aes(x=cut, y=..prop.., group=1))
+```
+This will plot the bar chart but proportion on Y axis
+
+3. Using statistical transformation
+```{r}
+ggplot(data = diamonds)+
+  stat_summary(
+    mapping = aes(x=cut,y=depth),
+    fun.y = median,
+    fun.ymax = max,
+    fun.ymin = min
+  )
+```
+
+*****POSITION ADJUSTMENTS
+1. To color the border of bar chart based on a variable
+```{r}
+ggplot(data = diamonds) +
+  geom_bar(mapping = aes(x=cut, color=cut))
+```
+
+2. To fill the bars with colors
+```{r}
+ggplot(data = diamonds) +
+  geom_bar(mapping = aes(x=cut, fill=cut))
+```
+
+3. To create a stacked bar chart
+```{r}
+ggplot(data = diamonds) +
+  geom_bar(mapping = aes(x=cut, fill=clarity))
+```
+This is done because another variable is assigned to the fill argument
+
+4. If we do not need stacking we can use the position argument to avoid it as follows:
+4.1 position=identity
+```{r}
+ggplot(data = diamonds, mapping = aes(x=cut, fill=clarity))+
+  geom_bar(alpha=1/5, position = "identity")
+
+ggplot(data = diamonds, mapping = aes(x=cut, color=clarity))+
+  geom_bar(fill=NA, position = "identity")
+```
+The above two graphs will place each object excatly where it falls in the context of the graph. aplha will create transparency in color and second code will only create a colored border for each object
+
+4.2 position=fill
+```{r}
+ggplot(data = diamonds) +
+  geom_bar(mapping = aes(x=cut, fill=clarity), position = "fill")
+```
+The above code will create a bar chart with each set of stacked bar chart the same height. Y axis will be proportion
+
+4.3 position=dodge
+```{r}
+ggplot(data = diamonds) +
+  geom_bar(mapping = aes(x=cut, fill=clarity), position = "dodge")
+```
+The above code will place overlapping objects next to each other
+
+*****Jitter
+```{r}
+ggplot(data = mpg)+
+  geom_point(mapping = aes(x=displ,y=hwy),position = "jitter")
+```
+This code will add small random noise to each point. This avoids overplotting.
+
+
+*****COORDINATE SYSTEM
+1. coord_flip()
+```{r}
+ggplot(data = mpg, mapping = aes(x=class,y=hwy)) +
+  geom_boxplot()
+```
+This will create a boxplot for every class variable VS hwy
+
+```{r}
+ggplot(data = mpg, mapping = aes(x=class,y=hwy)) +
+  geom_boxplot()+coord_flip()
+```
+This code will flip the X and Y axis as compared to the previous code
+
+2.
+```{r}
+coord_quickmap()
+nz <- map_data("nz")
+ggplot(nz, aes(long, lat, group=group))+
+  geom_polygon(fill="white", color="black")
+
+
+nz <- map_data("nz")
+ggplot(nz, aes(long, lat, group=group))+
+  geom_polygon(fill="white", color="black")+ coord_quickmap()
+```
+This function is used to set the aspect ratio for maps.
+
+3.
+```{r}
+coord_polar()
+bar <- ggplot(data = diamonds)+
+  geom_bar(mapping = aes(x=cut, fill=cut), show.legend = FALSE , width = 1)+
+  theme(aspect.ratio = 1)+
+  labs(x=NULL, y=NULL)
+bar+coord_flip()
+bar+coord_polar()
+```
+The above code initially creates a bar chart  for variable cut from dataset diamonds. Then the bar chart is flipped using coord_fli(). This flipped barchart is converted to a pie chart by using coord_polar()
+
