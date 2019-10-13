@@ -1,0 +1,202 @@
+---
+title: "Dsouza_Clinton_Assignment#5"
+author: "Clinton Dsouza"
+date: "10/6/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+GitHub Link: https://github.com/cdsouza94/R--Projects
+
+Let's load the libraries required for this task
+```{r}
+library(tidyverse)
+library(lubridate)
+library(stringr)
+```
+
+
+Next, lets load the farmers market data 
+```{r}
+getwd()
+setwd("C:\\Users\\dsouz\\Desktop")
+farmermkt <- read_csv("farmers_market.csv.csv", col_types = cols(Season4Date = col_character(), Season4Time = col_character())) 
+head(farmermkt,50)
+```
+
+-----------------------------------------------------------------------------------
+Q1)
+Find the number of days the markets are open per week
+
+```{r}
+DaysOpen <- gsub("[(AM|PM) a-z 0-9]","", farmermkt$Season1Time)
+```
+Using gsub here to remove everything except the initial of days. 
+
+```{r}
+DaysOpen <- farmermkt %>%
+      transmute(Season1Time, Season1Days = (str_count(DaysOpen, "[A-Z a-z]")))
+head(DaysOpen, 75)
+```
+
+
+-----------------------------------------------------------------------------------
+Q2)
+Indicate if a market is open during the weekends
+
+Considering weekend as a Saturday and Sunday
+```{r}
+weekend <- gsub("[a-z ^s 0-9 MTWTF]", "",farmermkt$Season1Time)
+```
+In the above step, I have eliminated all alphabets except lower and upper 's' and then count their occurences as below
+
+```{r}
+weekend <- farmermkt %>%
+  transmute(Season1Time, WeekendOpen = str_count(weekend, "[(^S)|(^s)]"))
+head(weekend, 75)
+```
+From the above result: 1 indicates that the market is open on a Saturday or a Sunday. 2 indicates its open on both days. 0 indicates it is not open on weekends.
+This can also be done using str_detect() which will give a TRUE/FALSE result.
+
+
+-----------------------------------------------------------------------------------
+Q3)
+First, I have created two different columns for the Start Time and End Time of every Market. Below are the steps taken to do that:
+
+Following a regex pattern to remove all unnecessary words and keep only the time data for this analysis. Then, making a new column for start time of the market
+Creating a regex which will keep only the Start Time:
+```{r}
+Times <- gsub("(?i)(Mon)|(Tue)|(Wed)|(Thu)|(Fri)|(Sat)|(Sun)","",farmermkt$Season1Time)
+StartTime <- gsub("\\-(.*)","", Times)
+StartTime <- gsub("^:?","", StartTime)
+StartTime <- parse_time(StartTime) 
+head(StartTime, 20)   
+```
+
+Making a new column for end time of the market
+Creating a regex which will keep only the End Time:
+```{r}
+EndTime <- gsub("(\\;).*","",Times)
+EndTime <- gsub("(.*)\\-","",EndTime)
+EndTime <- parse_time(EndTime)
+head(EndTime, 20)
+```
+
+
+Details of Markets which close before 6PM are as follows:
+I have used the filter() along with the hour() to pull out the exact times as needed from the column
+```{r}
+CloseBeforeSix <- farmermkt %>%
+  transmute(FMID, MarketName, Season1Time, StartTime, EndTime) %>%
+  filter(hour(EndTime) < 18)
+head(CloseBeforeSix, 75)
+```
+
+
+Details of Markets which are open for less than 4 hours a day are as follows:
+Performing arithmetic operation on the 2 columns of data type: time
+```{r}
+OpenFourhours <- farmermkt %>%
+  transmute(FMID, MarketName, Season1Time, StartTime, EndTime) %>%
+  filter((EndTime - StartTime) < 14400)
+head(OpenFourhours, 75)
+```
+
+
+-----------------------------------------------------------------------------------
+Q4)
+First, I have created two different columns: Season1Begin and Season1Date which will state the Beginning and End Date of the Market.
+
+This is done by using regex to only pick the first part of the dates before "to" and then use the parse function to convert all the rows in a standard format
+I have updated all the years to 2017 since there were many rows with only months mentioned. This will avoid confusion in our analysis.
+
+```{r}
+Season1Begin <- gsub("(to).*","",farmermkt$Season1Date)
+Season1Begin <- parse_date_time(Season1Begin, orders = c("m/d/Y", "m"))
+Season1Begin <- update(Season1Begin, year = 2017)
+```
+
+Similary for Season1End, I have used regex to only pick the last part of the dates after "to" and then use the parse function to convert all the rows in a standard format
+```{r}
+Season1End <- gsub(".*(to)","",farmermkt$Season1Date)
+Season1End <- parse_date_time(Season1End, orders = c("m/d/Y", "m"))
+Season1End <- update(Season1End, year = 2017)
+```
+
+Mutating to combine all required columns and using if_else to satisfy the condition in order to get a different column for Fall, Spring, Summer, Winter, HalfYear and Full Year. Each of the seasons will represent if the market is open during that season. Halfyear indicates if the market is open for 6-11 months and FullYear indicates if the market is open for 12 months along the yearly cycle.
+
+Here assumption is made that Fall is from August to October; Summer is from May to July; Winter is from November to January and Spring is from February to April
+
+```{r}
+Season <- farmermkt %>%
+           transmute(Season1Date, Season1Begin, Season1End, BM = month(Season1Begin), EM = month(Season1End),
+                  Fall = if_else((BM == 8 | BM == 9 | BM == 10 | EM == 8 | EM == 9 | EM == 10 | (BM == 1 & EM == 12)) ,"Fall","Not Fall"),
+                  Summer = if_else((BM ==  5| BM == 6 | BM == 7 | EM == 5 | EM == 6 | EM == 7 |(BM == 1 & EM == 12)) ,"Summer","Not Summer"),
+                  Winter = if_else((BM == 11 | BM == 12 | BM == 1 | EM == 11 | EM == 12 | EM == 1 | (BM == 1 & EM == 12)) ,"Winter","Not Winter"),
+                  Spring = if_else((BM == 2 | BM == 3 | BM == 4 | EM == 2 | EM == 3 | EM == 4 | (BM == 1 & EM == 12)) ,"Spring","Not Spring"),
+                  HalfYear = if_else(( (EM-BM) >= 5 & (EM-BM) < 12), "Half Year", "Less than Half Year"),
+                  FullYear = if_else(( (EM-BM) == 11 | (EM-BM) == 0), "Full Year", "Not Full Year"))
+head(Season, 75, 11)
+```
+
+Once this is run, we can see that if the market is open for any two/three seasons, then it also shows that it is "HalfYear". If the market is open for any one season, it shows that it is "Less Than Half Year" and "Not Full Year"
+
+
+-----------------------------------------------------------------------------------
+Q5)
+Extracting only the columns we need for this analysis/visualization
+
+```{r}
+Extract <- farmermkt %>%
+            transmute(city, County, State, Fall = Season$Fall, Summer = Season$Summer, 
+                      Spring = Season$Spring, Winter = Season$Winter, Half_Year = Season$HalfYear, Full_Year = Season$FullYear)
+head(Extract,75)
+```
+
+In this exercise I have tried to analyze which season shows more number of Open Market Days. Visualization is as follows:
+```{r}
+ggplot(Extract) + geom_bar(mapping = aes(x = Fall, fill = "Red")) + 
+  geom_bar(mapping = aes(x = Spring, fill = "Green")) + 
+  geom_bar(mapping = aes(x = Summer, fill = "Cyan")) +
+  geom_bar(mapping = aes(x = Winter, fill = "Yellow")) + theme(legend.position = "none")
+```
+This shows us that there are more number of open markets during Fall and Summer season
+
+To dig deeper inside, I have analyzed which States show much number of Open Markets Fall and Summer respectively:
+
+For Fall Season:
+```{r}
+Extract %>%
+  filter(!is.na(Fall)) %>%
+  ggplot() + geom_bar(aes(State, fill = Fall), position = "dodge") + coord_flip()
+```
+
+
+For Summer Season:
+```{r}
+Extract %>%
+  filter(!is.na(Summer)) %>%
+  ggplot() + geom_bar(aes(State, fill = Summer), position = "dodge") + coord_flip()
+```
+From the above two graphs, we can see all States in the US have more number of markets opened during the Fall and Summer which is an interesting find. 
+California followed by New York shows the top two number of open market states in Fall and Summer. 
+California has more number of open markets in the Fall whereas New York has more number of open markets in the Summer. This makes sense since weather plays a big difference to decide if the market should be opened.
+
+
+Additionally a bar graph of proportion of how many markets are open for Half Year in each State is done:
+```{r}
+Extract %>%
+  filter(!is.na(Half_Year)) %>%
+  ggplot() + geom_bar(aes(State, fill = Half_Year), position = "dodge") + coord_flip()
+```
+
+Also, proportion of how many markets are open for Full year in each State is as follows:
+```{r}
+Extract %>%
+  filter(!is.na(Full_Year)) %>%
+  ggplot() + geom_bar(aes(State, fill = Full_Year), position = "dodge") + coord_flip()
+```
+
+Conclusion: The above graphs show that there are more number of markets which are opened for Half Year rather that Full Year. Almost all states have more number of open markets for Half Year.
+This shows us that the States of have almost % of markets open year round and the States of have almost % of markets open half yearly.Only California is the state where there are highest number of markets opened for Full Year. 
